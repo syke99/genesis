@@ -49,7 +49,7 @@ func Spawn[T any](m map[string]any) (*T, error) {
 
 	v = rV.(reflect.Value)
 
-	intermediate := v.Interface().(T)
+	s = v.Addr().Interface().(*T)
 
-	return &intermediate, err
+	return s, nil
 }
