@@ -158,3 +158,65 @@ func TestSpawnNestedTestTypeWithWrongMapType(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, pkg.BadMap(pkg.Nested).Error(), err.Error())
 }
+
+func TestSpawnWithContext(t *testing.T) {
+	c := context.Background()
+
+	c = context.WithValue(c, pkg.FieldOneStr, pkg.FieldOne)
+
+	v, err := SpawnWithContext[TestType](c, map[string]func(ctx context.Context) any{
+		pkg.FieldOneStr: func(ctx context.Context) any {
+			return c.Value(pkg.FieldOneStr)
+		},
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, pkg.FieldOne, v.FieldOne)
+}
+
+func TestSpawnWithContextNestedMap(t *testing.T) {
+	c := context.Background()
+
+	c = context.WithValue(c, pkg.FieldOneStr, pkg.FieldOne)
+
+	v, err := SpawnWithContext[TestType](c, map[string]func(ctx context.Context) any{
+		pkg.FieldOneStr: func(ctx context.Context) any {
+			return c.Value(pkg.FieldOneStr)
+		},
+		pkg.Nested: func(ctx context.Context) any {
+			return map[string]any{
+				pkg.FieldFourStr: pkg.FieldFour,
+				pkg.FieldFiveStr: pkg.FieldFive,
+				pkg.FieldSixStr:  pkg.FieldSix,
+			}
+		},
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, pkg.FieldOne, v.FieldOne)
+	assert.Equal(t, pkg.FieldFour, v.Nested.FieldFour)
+	assert.Equal(t, pkg.FieldFive, v.Nested.FieldFive)
+	assert.Equal(t, pkg.FieldSix, v.Nested.FieldSix)
+}
+
+func TestSpawnWithContextNestedContextFuncMap(t *testing.T) {
+	c := context.Background()
+
+	c = context.WithValue(c, pkg.FieldOneStr, pkg.FieldOne)
+
+	c = context.WithValue(c, pkg.FieldFourStr, pkg.FieldFour)
+
+	v, err := SpawnWithContext[TestType](c, map[string]func(ctx context.Context) any{
+		pkg.FieldOneStr: func(ctx context.Context) any {
+			return c.Value(pkg.FieldOneStr)
+		},
+		pkg.Nested: func(ctx context.Context) any {
+			return map[string]func(cCtx context.Context) any{
+				pkg.FieldFourStr: func(cCtx context.Context) any {
+					return c.Value(pkg.FieldFourStr)
+				},
+			}
+		},
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, pkg.FieldOne, v.FieldOne)
+	assert.Equal(t, pkg.FieldFour, v.Nested.FieldFour)
+}

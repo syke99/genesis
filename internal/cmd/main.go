@@ -31,7 +31,16 @@ func Spawn(f reflect.Value, m map[string]any) (any, error) {
 					return nil, pkg.BadMap(mn)
 				}
 			} else {
-				fl.Set(reflect.ValueOf(mv))
+				if mvT.Kind() == reflect.Func {
+					r := reflect.ValueOf(mv).Call([]reflect.Value{})
+					// TODO: handle errors
+					// if len(r) > 1 && r[1].Type().Implements(reflect.TypeOf(errors.New(""))) {
+					//	 return nil, r[1].MethodByName("Error").Call([]reflect.Value{})[0].Elem().Interface().(error)
+					// }
+					fl.Set(r[0])
+				} else {
+					fl.Set(reflect.ValueOf(mv))
+				}
 			}
 		} else {
 			if fl.CanAddr() {
@@ -53,10 +62,11 @@ func SpawnWithContext(ctx context.Context, f reflect.Value, m map[string]func(ct
 		if fl.CanSet() {
 			flT := reflect.TypeOf(fl)
 
-			mvT := reflect.TypeOf(mv)
+			res := mv(ctx)
+
+			mvT := reflect.TypeOf(res)
 
 			if flT.Kind() == reflect.Struct && mvT.Kind() == reflect.Map {
-				res := mv(ctx)
 				switch res.(type) {
 				case map[string]any:
 					v, err := Spawn(fl, res.(map[string]any))
