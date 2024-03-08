@@ -2,6 +2,7 @@ package genesis
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/syke99/genesis/internal/pkg"
 	"testing"
 )
 
@@ -22,48 +23,115 @@ type NestedTestType struct {
 	FieldSix  bool
 }
 
+func TestSpawnTestType(t *testing.T) {
+	v, err := Spawn[TestType](map[string]any{
+		pkg.FieldOneStr: pkg.FieldOne,
+		pkg.FieldTwoStr: pkg.FieldTwo,
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, pkg.FieldOne, v.FieldOne)
+	assert.Equal(t, pkg.FieldTwo, v.FieldTwo)
+}
+
+func TestSpawnUnexportedField(t *testing.T) {
+	v, err := Spawn[TestType](map[string]any{
+		pkg.FieldOneStr:   pkg.GoodBye,
+		pkg.FieldTwoStr:   pkg.FieldFive,
+		pkg.FieldThreeStr: pkg.FieldThree,
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, pkg.GoodBye, v.FieldOne)
+	assert.Equal(t, pkg.FieldFive, v.FieldTwo)
+	assert.Equal(t, pkg.FieldThree, v.fieldThree)
+}
+
 func TestSpawnNestedTestType(t *testing.T) {
 	v, err := Spawn[TestType](map[string]any{
-		"FieldOne": "hello world",
-		"FieldTwo": 1234,
-		"Nested": NestedTestType{
-			FieldFour: "what's up!",
-			FieldFive: 5678,
-			FieldSix:  true,
+		pkg.FieldOneStr: pkg.FieldOne,
+		pkg.FieldTwoStr: pkg.FieldTwo,
+		pkg.Nested: NestedTestType{
+			FieldFour: pkg.FieldFour,
+			FieldFive: pkg.FieldFive,
+			FieldSix:  pkg.FieldSix,
 		},
 	})
 	assert.NoError(t, err)
-	assert.Equal(t, "hello world", v.FieldOne)
-	assert.Equal(t, 1234, v.FieldTwo)
-	assert.Equal(t, "what's up!", v.Nested.FieldFour)
-	assert.Equal(t, 5678, v.Nested.FieldFive)
-	assert.Equal(t, true, v.Nested.FieldSix)
+	assert.Equal(t, pkg.FieldOne, v.FieldOne)
+	assert.Equal(t, pkg.FieldTwo, v.FieldTwo)
+	assert.Equal(t, pkg.FieldFour, v.Nested.FieldFour)
+	assert.Equal(t, pkg.FieldFive, v.Nested.FieldFive)
+	assert.Equal(t, pkg.FieldSix, v.Nested.FieldSix)
 }
 
 func TestSpawnNestedTestTypeFromMap(t *testing.T) {
 	v, err := Spawn[TestType](map[string]any{
-		"FieldOne": "hello world",
-		"FieldTwo": 1234,
-		"Nested": map[string]any{
-			"FieldFour": "what's up!",
-			"FieldFive": 5678,
-			"FieldSix":  true,
+		pkg.FieldOneStr: pkg.FieldOne,
+		pkg.FieldTwoStr: pkg.FieldTwo,
+		pkg.Nested: map[string]any{
+			pkg.FieldFourStr: pkg.FieldFour,
+			pkg.FieldFiveStr: pkg.FieldFive,
+			pkg.FieldSixStr:  pkg.FieldSix,
 		},
 	})
 	assert.NoError(t, err)
-	assert.Equal(t, "hello world", v.FieldOne)
-	assert.Equal(t, 1234, v.FieldTwo)
-	assert.Equal(t, "what's up!", v.Nested.FieldFour)
-	assert.Equal(t, 5678, v.Nested.FieldFive)
-	assert.Equal(t, true, v.Nested.FieldSix)
+	assert.Equal(t, pkg.FieldOne, v.FieldOne)
+	assert.Equal(t, pkg.FieldTwo, v.FieldTwo)
+	assert.Equal(t, pkg.FieldFour, v.Nested.FieldFour)
+	assert.Equal(t, pkg.FieldFive, v.Nested.FieldFive)
+	assert.Equal(t, pkg.FieldSix, v.Nested.FieldSix)
 }
 
-func TestSpawnUnexportedField(t *testing.T) {
+func TestSpawnUnexportedFieldNestedTestType(t *testing.T) {
+	v, err := Spawn[TestType](map[string]any{
+		pkg.FieldOneStr:   pkg.FieldOne,
+		pkg.FieldTwoStr:   pkg.FieldTwo,
+		pkg.FieldThreeStr: pkg.FieldThree,
+		pkg.Nested: NestedTestType{
+			FieldFour: pkg.FieldFour,
+			FieldFive: pkg.FieldFive,
+			FieldSix:  pkg.FieldSix,
+		},
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, pkg.FieldOne, v.FieldOne)
+	assert.Equal(t, pkg.FieldTwo, v.FieldTwo)
+	assert.Equal(t, pkg.FieldThree, v.fieldThree)
+	assert.Equal(t, pkg.FieldFour, v.Nested.FieldFour)
+	assert.Equal(t, pkg.FieldFive, v.Nested.FieldFive)
+	assert.Equal(t, pkg.FieldSix, v.Nested.FieldSix)
+}
+
+func TestSpawnUnexportedFieldNestedTestTypeFromMap(t *testing.T) {
+	v, err := Spawn[TestType](map[string]any{
+		pkg.FieldOneStr:   pkg.FieldOne,
+		pkg.FieldTwoStr:   pkg.FieldTwo,
+		pkg.FieldThreeStr: pkg.FieldThree,
+		pkg.Nested: map[string]any{
+			pkg.FieldFourStr: pkg.FieldFour,
+			pkg.FieldFiveStr: pkg.FieldFive,
+			pkg.FieldSixStr:  pkg.FieldSix,
+		},
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, pkg.FieldOne, v.FieldOne)
+	assert.Equal(t, pkg.FieldTwo, v.FieldTwo)
+	assert.Equal(t, pkg.FieldThree, v.fieldThree)
+	assert.Equal(t, pkg.FieldFour, v.Nested.FieldFour)
+	assert.Equal(t, pkg.FieldFive, v.Nested.FieldFive)
+	assert.Equal(t, pkg.FieldSix, v.Nested.FieldSix)
+}
+
+func TestSpawnNestedTestTypeWithWrongMapType(t *testing.T) {
 	_, err := Spawn[TestType](map[string]any{
-		"FieldOne":   "goodbye everyone",
-		"FieldTwo":   5678,
-		"fieldThree": true,
+		pkg.FieldOneStr:   pkg.FieldOne,
+		pkg.FieldTwoStr:   pkg.FieldTwo,
+		pkg.FieldThreeStr: pkg.FieldThree,
+		pkg.Nested: map[string]string{
+			pkg.FieldFourStr: pkg.FieldFour,
+			pkg.FieldFiveStr: "pkg.FieldFive",
+			pkg.FieldSixStr:  "true",
+		},
 	})
 	assert.Error(t, err)
-	assert.Equal(t, "field fieldThree is either unexported or unaddressable", err.Error())
+	assert.Equal(t, pkg.BadMap(pkg.Nested).Error(), err.Error())
 }
