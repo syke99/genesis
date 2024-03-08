@@ -1,9 +1,11 @@
 package genesis
 
 import (
+	"context"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/syke99/genesis/internal/pkg"
-	"testing"
 )
 
 type TestType struct {
@@ -119,6 +121,27 @@ func TestSpawnUnexportedFieldNestedTestTypeFromMap(t *testing.T) {
 	assert.Equal(t, pkg.FieldFour, v.Nested.FieldFour)
 	assert.Equal(t, pkg.FieldFive, v.Nested.FieldFive)
 	assert.Equal(t, pkg.FieldSix, v.Nested.FieldSix)
+}
+
+func TestSpawnNestedTestTypeWithMapForSpawnWithContext(t *testing.T) {
+	_, err := Spawn[TestType](map[string]any{
+		pkg.FieldOneStr:   pkg.FieldOne,
+		pkg.FieldTwoStr:   pkg.FieldTwo,
+		pkg.FieldThreeStr: pkg.FieldThree,
+		pkg.Nested: map[string]func(ctx context.Context) any{
+			pkg.FieldFourStr: func(ctx context.Context) any {
+				return pkg.FieldFour
+			},
+			pkg.FieldFiveStr: func(ctx context.Context) any {
+				return pkg.FieldFive
+			},
+			pkg.FieldSixStr: func(ctx context.Context) any {
+				return pkg.FieldSix
+			},
+		},
+	})
+	assert.Error(t, err)
+	assert.Equal(t, pkg.WrongSpawnForMap(pkg.Nested).Error(), err.Error())
 }
 
 func TestSpawnNestedTestTypeWithWrongMapType(t *testing.T) {
